@@ -1,0 +1,962 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Three 30-minute EL stations for grades 9–12: ELPA21 practice, making inferences, and complex sentences, with built-in timers and teacher-led lessons.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Ccircle cx=%2232%22 cy=%2232%22 r=%2228%22 fill=%22%231E2761%22/%3E%3Cpath d=%22M32 12 A20 20 0 0 1 52 32 L32 32Z%22 fill=%22%23C9A227%22/%3E%3C/svg%3E">
+<title>Storm Studio Stations</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+html{color-scheme:light}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}
+
+/* Layout: rotation board on top (three station timers), selected station's work below in a single readable column */
+:root{
+  --bg:#f2f4f7; --surface:#ffffff; --ink:#15202e; --muted:#5a6676; --line:#d9dee6;
+  --s1:#4338ca; --s1-soft:#e7e6fb;
+  --s2:#0f766e; --s2-soft:#dcf1ee;
+  --s3:#b45309; --s3-soft:#fbeedc;
+  --good:#15803d; --bad:#b91c1c;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1520; --surface:#18212f; --ink:#e8edf4; --muted:#9aa7b8; --line:#2b3748;
+  --s1:#a5a1ff; --s1-soft:#25244a; --s2:#5fd4c6; --s2-soft:#13332f; --s3:#f3b264; --s3-soft:#3a2a14;
+  --good:#5bd88a; --bad:#ff8a8a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1520; --surface:#18212f; --ink:#e8edf4; --muted:#9aa7b8; --line:#2b3748;
+  --s1:#a5a1ff; --s1-soft:#25244a; --s2:#5fd4c6; --s2-soft:#13332f; --s3:#f3b264; --s3-soft:#3a2a14;
+  --good:#5bd88a; --bad:#ff8a8a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55}
+.wrap{max-width:1120px;margin:0 auto;padding-block:24px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+header.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px;margin-bottom:20px}
+header.top h1{font-size:clamp(28px,4vw,40px);font-weight:800}
+header.top p{margin:4px 0 0;color:var(--muted)}
+.meta{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--muted);background:var(--surface)}
+
+/* rotation board */
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:820px){.board{grid-template-columns:1fr}}
+.st{--c:var(--s1);--soft:var(--s1-soft);background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:16px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;cursor:pointer;transition:border-color .15s}
+.st[data-s="2"]{--c:var(--s2);--soft:var(--s2-soft)}
+.st[data-s="3"]{--c:var(--s3);--soft:var(--s3-soft)}
+.st[aria-current="true"]{border-color:var(--c);box-shadow:0 0 0 4px var(--soft)}
+.st:focus-visible{outline:3px solid var(--c);outline-offset:3px}
+.ring{width:96px;height:96px;position:relative}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .track{fill:none;stroke:var(--soft);stroke-width:9}
+.ring .bar{fill:none;stroke:var(--c);stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .4s linear}
+.ring .t{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
+.st.done .ring .t{color:var(--bad)}
+.st h2{font-size:20px}
+.st .num{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--c);font-weight:700}
+.st p{margin:2px 0 10px;color:var(--muted);font-size:15px}
+.ctrls{display:flex;flex-wrap:wrap;gap:6px}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--body);font-weight:700;font-size:14px;border-radius:8px;padding:7px 12px;border:1.5px solid var(--c,var(--ink));background:transparent;color:var(--c,var(--ink))}
+.btn.solid{background:var(--c,var(--ink));color:var(--surface)}
+.btn:focus-visible{outline:3px solid var(--c,var(--ink));outline-offset:2px}
+.btn:disabled{opacity:.5;cursor:default}
+.rowbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.rowbar .note{color:var(--muted);font-size:14px}
+
+/* station panel */
+.panel{--c:var(--s1);--soft:var(--s1-soft);margin-top:26px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.panel[data-s="2"]{--c:var(--s2);--soft:var(--s2-soft)}
+.panel[data-s="3"]{--c:var(--s3);--soft:var(--s3-soft)}
+.phead{background:var(--soft);padding:22px clamp(16px,3vw,32px);display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}
+.phead h2{font-size:clamp(24px,3vw,32px);color:var(--ink)}
+.phead .eyebrow{color:var(--c);font-weight:700}
+.mini{font-family:var(--mono);font-weight:700;font-size:28px;font-variant-numeric:tabular-nums;color:var(--c)}
+.pbody{padding:24px clamp(16px,3vw,32px) 32px;display:grid;gap:26px}
+.objs{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.obj{border-left:4px solid var(--c);padding:6px 12px;background:var(--bg);border-radius:0 8px 8px 0}
+.obj b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.obj span{font-size:15px}
+.plan{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:0}
+.plan li{font-size:14px;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.plan li b{font-family:var(--mono);color:var(--c)}
+section.part{display:grid;gap:12px}
+.part > h3{font-size:21px;display:flex;align-items:baseline;gap:10px}
+.part > h3 .tag{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--c);letter-spacing:.08em}
+.prose{max-width:68ch}
+.passage{max-width:68ch;background:var(--bg);border-radius:10px;padding:18px 20px}
+.passage p{margin:0 0 12px}
+.passage p:last-child{margin:0}
+.passage h4{font-family:var(--display);font-size:22px;margin:0 0 4px}
+.pnum{font-family:var(--mono);font-size:12px;color:var(--c);font-weight:700;margin-right:6px}
+mark{background:var(--soft);color:inherit;border-bottom:2px solid var(--c);padding:0 2px}
+.es{color:var(--muted);font-style:italic;font-size:15px}
+.q{border:1px solid var(--line);border-radius:10px;padding:14px 16px;max-width:760px}
+.q .stem{font-weight:700;margin-bottom:8px}
+.opts{display:grid;gap:6px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);text-align:left;color:var(--ink)}
+.opt:hover{border-color:var(--c)}
+.opt[aria-pressed="true"]{border-color:var(--c);background:var(--soft)}
+.opt.right{border-color:var(--good)}
+.opt.wrong{border-color:var(--bad)}
+.opt .L{font-family:var(--mono);font-weight:700;color:var(--c);min-width:1.2em}
+.fb{font-size:14px;margin-top:6px;min-height:1em}
+.fb.ok{color:var(--good)} .fb.no{color:var(--bad)}
+.score{font-family:var(--mono);font-weight:700}
+.frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;max-width:900px}
+.frame{background:var(--bg);border-radius:8px;padding:8px 12px;font-size:15px}
+.frame b{color:var(--c)}
+textarea,input[type=text]{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:10px 12px}
+textarea:focus,input[type=text]:focus{outline:none;border-color:var(--c);box-shadow:0 0 0 3px var(--soft)}
+label.f{display:grid;gap:4px;font-weight:700;font-size:15px}
+label.f small{font-weight:400;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.rubric{border-collapse:collapse;width:100%;min-width:560px;font-size:15px}
+.tbl{overflow-x:auto}
+.rubric th,.rubric td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.rubric th{background:var(--bg);font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.checks{display:grid;gap:6px;max-width:760px}
+.checks label{display:flex;gap:10px;align-items:flex-start}
+.checks input{width:20px;height:20px;accent-color:var(--c);margin-top:3px;flex:none}
+.builder{display:grid;gap:8px;max-width:760px}
+.bank,.line{display:flex;flex-wrap:wrap;gap:6px;min-height:46px;padding:8px;border-radius:8px}
+.bank{background:var(--bg)}
+.line{border:2px dashed var(--line)}
+.tile{font:inherit;font-size:16px;padding:6px 10px;border-radius:6px;border:1.5px solid var(--c);background:var(--surface);color:var(--ink)}
+.wc{font-family:var(--mono);font-size:14px;color:var(--muted)}
+.wc b{color:var(--c)}
+.words{display:flex;flex-wrap:wrap;gap:6px}
+.words span{font-size:14px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--bg)}
+.callout{border:1.5px solid var(--c);border-radius:10px;padding:12px 16px;max-width:760px;background:var(--soft)}
+.callout b{color:var(--c)}
+
+.coach{border:2px solid var(--c);border-radius:14px;padding:18px clamp(14px,2.5vw,24px);display:grid;gap:14px}
+.coach-h{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.coach-h h3{font-size:22px}
+.badge{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:var(--c);color:var(--surface);border-radius:999px;padding:4px 10px}
+.formula{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:18px}
+.formula span{border:1.5px solid var(--line);border-radius:8px;padding:6px 12px;background:var(--bg)}
+.formula span.hl{background:var(--soft);border-color:var(--c);color:var(--c)}
+.formula i{font-style:normal;color:var(--muted)}
+.steps{margin:0;padding-left:1.4em;display:grid;gap:6px;max-width:72ch}
+.steps li::marker{font-family:var(--mono);font-weight:700;color:var(--c)}
+.model{background:var(--bg);border-radius:10px;padding:16px 18px;max-width:780px;display:grid;gap:8px}
+.model p{margin:0}
+.think{margin:0;padding-left:1.4em;display:grid;gap:6px}
+.think li::marker{color:var(--c);font-weight:700}
+.note{color:var(--muted);font-size:14px}
+.hints{margin:8px 0 0;padding-left:1.4em;display:grid;gap:4px;font-size:15px}
+.hints:empty{display:none}
+.hints li{background:var(--soft);border-radius:6px;padding:4px 8px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.wpill{font-family:var(--mono);font-size:13px;background:var(--soft);color:var(--c);border:1px solid var(--c);border-radius:999px;padding:1px 9px;margin-left:4px;white-space:nowrap}
+.conj{min-width:520px}
+details.tcoach{border:1px dashed var(--line);border-radius:12px;padding:12px 16px;background:var(--bg)}
+details.tcoach summary{cursor:pointer;font-family:var(--display);font-weight:700;font-size:18px;color:var(--c)}
+details.tcoach summary:focus-visible{outline:3px solid var(--c);outline-offset:3px}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:12px}
+.tgrid h5{margin:0 0 4px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tgrid ul{margin:0;padding-left:1.1em;font-size:15px;display:grid;gap:4px}
+
+.player{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--bg);display:grid;gap:12px}
+.pl-stage{display:grid;grid-template-columns:170px minmax(0,1fr);gap:14px;align-items:end}
+@media (max-width:640px){.pl-stage{grid-template-columns:1fr}.pl-teacher{flex-direction:row;align-items:center}.pl-fig{width:96px}}
+.pl-teacher{display:flex;flex-direction:column;align-items:center;gap:4px}
+.pl-fig{width:150px;max-width:100%}
+.tsvg{width:100%;height:auto;display:block}
+.pl-name{font-family:var(--display);font-weight:700;text-align:center;line-height:1.2}
+.pl-name small{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--c);font-weight:700}
+.mouth{transform-origin:80px 92px;transform-box:view-box}
+.talking .mouth{animation:talk .22s ease-in-out infinite alternate}
+@keyframes talk{from{transform:scaleY(.4)}to{transform:scaleY(1.6)}}
+.eyes{transform-origin:80px 72px;transform-box:view-box;animation:blink 5s infinite}
+@keyframes blink{0%,96%,100%{transform:scaleY(1)}98%{transform:scaleY(.1)}}
+.arm{transform-origin:116px 136px;transform-box:view-box}
+.talking .arm{animation:point 1.4s ease-in-out infinite alternate}
+@keyframes point{from{transform:rotate(0)}to{transform:rotate(-8deg)}}
+.pl-board{--chalk:#eef3ee;background:#1f3b33;color:var(--chalk);border:8px solid #6b4a2e;border-radius:10px;min-height:250px;padding:18px 20px;display:grid;align-content:start;gap:10px;min-width:0}
+.pl-step{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#a9d8c9}
+.pl-content{display:grid;gap:10px;font-size:18px}
+.pl-content p{margin:0}
+.bh{font-family:var(--display);font-size:clamp(26px,4vw,38px);margin:0;color:#fff}
+.bsub{font-size:20px;color:#ffe08a}
+.bnote{font-size:15px;color:#cfe3dc}
+.bsent{font-family:var(--display);font-size:clamp(19px,2.6vw,24px);color:#fff;line-height:1.35}
+.bsent u{text-decoration-color:#ffe08a;text-decoration-thickness:3px;text-underline-offset:4px}
+.bsent.bad{color:#ffb4b4}.bsent.good{color:#b8f0c8}
+.bcomma{color:#ffe08a;font-size:1.4em;font-weight:800}
+.bq{color:#ffe08a;font-weight:700}
+.bbig{font-family:var(--display);font-size:20px;color:#ffe08a;line-height:1.35}
+.bform{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--display);font-weight:700;font-size:20px}
+.bform span{border:2px dashed #cfe3dc;border-radius:8px;padding:6px 12px}
+.bform span.on{border-style:solid;border-color:#ffe08a;color:#ffe08a}
+.bcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.bcols div{border:1px solid #4f7a6c;border-radius:8px;padding:8px 10px}
+.bcols b{color:#ffe08a}
+.bchips{display:flex;flex-wrap:wrap;gap:8px}
+.bchips span{border:1.5px solid #cfe3dc;border-radius:999px;padding:6px 12px;font-size:16px}
+.bchips b{color:#ffe08a}
+.blist{margin:0;padding-left:1.3em;display:grid;gap:6px}
+.blist b{color:#ffe08a}
+.pl-board .btn{--c:#ffe08a;justify-self:start}
+.pl-bubble{position:relative;background:var(--surface);border:1.5px solid var(--c);border-radius:12px;padding:12px 16px}
+.pl-bubble::before{content:"";position:absolute;top:-9px;left:72px;width:16px;height:16px;background:var(--surface);border-left:1.5px solid var(--c);border-top:1.5px solid var(--c);transform:rotate(45deg)}
+.pl-say{margin:0;font-size:17px}
+.pl-es{margin:6px 0 0}
+.pl-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pl-dots{display:flex;gap:6px;margin-left:auto}
+.pl-dot{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--c);background:transparent;padding:0}
+.pl-dot[aria-current="true"]{background:var(--c)}
+@media (prefers-reduced-motion:reduce){.talking .mouth,.talking .arm,.eyes{animation:none}}
+
+.challenge{border:2px dashed var(--c);border-radius:14px;padding:18px clamp(14px,2.5vw,24px);display:grid;gap:12px;background:var(--soft)}
+.challenge .coach-h h3{font-size:20px}
+.chart{margin:0;max-width:640px;background:var(--bg);border-radius:10px;padding:12px 14px;overflow-x:auto}
+.chart figcaption{font-weight:700;font-size:15px;margin-bottom:6px}
+.chart svg{width:100%;min-width:420px;height:auto;display:block}
+.chart .grid line{stroke:var(--line);stroke-width:1}
+.chart .ax text{fill:var(--muted);font-family:var(--mono);font-size:11px;text-anchor:middle}
+.chart .lbl text{fill:var(--ink);font-family:var(--body);font-size:14px;text-anchor:end}
+.chart .bars rect{fill:var(--c)}
+.chart .bars rect.lo{fill:var(--bad)}
+.chart .val text{fill:var(--ink);font-family:var(--mono);font-size:13px;font-weight:700}
+.msg{display:inline-block;background:var(--soft);border-radius:16px 16px 16px 4px;padding:8px 14px;margin:4px 0 8px;font-weight:400;max-width:100%}
+.msg .who{display:block;font-family:var(--mono);font-size:11px;color:var(--c);font-weight:700;letter-spacing:.06em}
+.sign{display:inline-block;border:3px solid var(--ink);border-radius:6px;padding:8px 14px;margin:4px 0 8px;font-family:var(--display);font-weight:800;text-align:center;letter-spacing:.03em}
+footer{margin-top:28px;color:var(--muted);font-size:14px;text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Laurel High School · EL Block 9–12 · Progressing (ELPA21 3–4)</div>
+      <h1>Storm Studio Stations</h1>
+      <p>Three 30-minute stations with built-in skill coaches. Theme: Hurricanes on the Gulf Coast.</p>
+    </div>
+    <div class="meta"><span class="chip">90 min total</span><span class="chip">MS ELP Standards</span><span class="chip">Chromebook ready</span></div>
+  </header>
+
+  <div class="board" id="board"></div>
+  <div class="rowbar">
+    <button class="btn solid" id="allStart" style="--c:var(--ink)">Start all three</button>
+    <button class="btn" id="allPause" style="--c:var(--ink)">Pause all</button>
+    <button class="btn" id="allReset" style="--c:var(--ink)">Reset all</button>
+    <button class="btn" id="sound" style="--c:var(--ink)" aria-pressed="true">Sound: on</button>
+    <span class="note">Tap a station to open its task. A chime plays when a timer reaches 0:00.</span>
+  </div>
+
+  <!-- STATION 1 -->
+  <article class="panel" data-s="1" id="p1">
+    <div class="phead">
+      <div><div class="eyebrow">Station 1 · ELPA21 Practice</div><h2>Test Ready: Listen, Speak, Build</h2></div>
+      <div class="mini" data-mini="1">30:00</div>
+    </div>
+    <div class="pbody">
+      <div class="objs">
+        <div class="obj"><b>Content objective</b><span>I can answer ELPA21-style questions about hurricane safety.</span></div>
+        <div class="obj"><b>Language objective</b><span>I can explain and support an idea out loud using signal words.</span></div>
+        <div class="obj"><b>MS ELP Standards</b><span>ELP 1 (listening), ELP 4 (support a claim), ELP 10 (grammar)</span></div>
+      </div>
+      <ul class="plan"><li><b>0–6</b> A Listening</li><li><b>6–14</b> B Speaking</li><li><b>14–19</b> C Sentence Builder</li><li><b>19–24</b> D Reading</li><li><b>24–30</b> E Writing</li></ul>
+
+      <section class="part">
+        <h3><span class="tag">PART A</span>Listening: Weather Announcement</h3>
+        <p class="prose">Like ELPA21 Listening: press <b>Play</b> and listen. You may play it two times. Use headphones. Then answer the questions.</p>
+        <div class="rowbar" style="margin:0">
+          <button class="btn solid" id="play">▶ Play announcement</button>
+          <button class="btn" id="showScript">Show transcript (teacher only)</button>
+          <span class="note" id="plays">Plays left: 2</span>
+        </div>
+        <div class="passage" id="script" hidden><p id="scriptText"></p></div>
+        <div id="qA"></div>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">PART B</span>Speaking: Present an Opinion</h3>
+        <div class="callout"><b>Prompt.</b> Your school wants to choose ONE thing every student should do to get ready for hurricane season. Which is better: <b>(A)</b> making an emergency kit at home or <b>(B)</b> learning the evacuation route? Choose one. Give two reasons and an example.</div>
+        <p class="prose"><b>Partner steps:</b> Think for 1 minute. Speaker talks for 60–90 seconds. Listener scores with the rubric. Switch roles.</p>
+        <div class="frames">
+          <div class="frame"><b>Opinion:</b> In my opinion, the best choice is ___ because…</div>
+          <div class="frame"><b>Reason 1:</b> First, ___ is important because…</div>
+          <div class="frame"><b>Reason 2:</b> In addition, …</div>
+          <div class="frame"><b>Example:</b> For example, if a family…</div>
+          <div class="frame"><b>Counter:</b> Some people think ___, but…</div>
+          <div class="frame"><b>Close:</b> For these reasons, I believe…</div>
+        </div>
+        <div class="tbl"><table class="rubric">
+          <tr><th>Score</th><th>What the speaker did</th><th>Partner check</th></tr>
+          <tr><td>4</td><td>Clear opinion, two reasons, an example, signal words, mostly correct grammar</td><td><input type="radio" name="rb" aria-label="Score 4"></td></tr>
+          <tr><td>3</td><td>Clear opinion, two reasons, some signal words, some errors</td><td><input type="radio" name="rb" aria-label="Score 3"></td></tr>
+          <tr><td>2</td><td>Opinion with one reason, short phrases</td><td><input type="radio" name="rb" aria-label="Score 2"></td></tr>
+          <tr><td>1</td><td>Words or a phrase related to the topic</td><td><input type="radio" name="rb" aria-label="Score 1"></td></tr>
+        </table></div>
+        <label class="f">One thing my partner did well:<input type="text" id="pf"></label>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">PART C</span>Sentence Builder</h3>
+        <p class="prose">Like the ELPA21 Writing items: tap the words in the correct order to make a complete sentence. Tap a word in the sentence to send it back.</p>
+        <div id="builders"></div>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">PART D</span>Reading: School Notice</h3>
+        <p class="prose">Like ELPA21 Reading: read the notice, then answer the questions.</p>
+        <div class="passage">
+          <h4>Laurel High School Storm Safety Notice</h4>
+          <p>When a hurricane watch is announced for Jones County, Laurel High School will send a message by phone and post updates on the school website. Students should take their Chromebooks, chargers, and any medicine home before the storm. If the power goes out at school, students will move to the interior hallways on the first floor. Teachers will stay with their classes until the danger has passed. After the storm, school will reopen only when the roads are safe. Families can call the front office with questions.</p>
+        </div>
+        <div id="qD"></div>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">PART E</span>Writing: Describe a Chart</h3>
+        <p class="prose">Like the ELPA21 Writing items: look at the chart and write <b>three sentences</b>. In sentence 1, tell what the chart shows. In sentence 2, compare the highest and the lowest bars. In sentence 3, give a recommendation with <i>should</i>.</p>
+        <figure class="chart">
+          <figcaption>Storm survey: What do LHS families have ready? (percent of families)</figcaption>
+          <svg viewBox="0 0 560 210" role="img" aria-label="Bar chart. Water 72 percent, flashlight 64 percent, first aid kit 41 percent, written plan 23 percent.">
+            <g class="grid"><line x1="150" y1="10" x2="150" y2="180"/><line x1="245" y1="10" x2="245" y2="180"/><line x1="340" y1="10" x2="340" y2="180"/><line x1="435" y1="10" x2="435" y2="180"/><line x1="530" y1="10" x2="530" y2="180"/></g>
+            <g class="ax"><text x="150" y="200">0%</text><text x="245" y="200">25%</text><text x="340" y="200">50%</text><text x="435" y="200">75%</text><text x="530" y="200">100%</text></g>
+            <g class="lbl"><text x="140" y="38">Water</text><text x="140" y="80">Flashlight</text><text x="140" y="122">First aid kit</text><text x="140" y="164">Written plan</text></g>
+            <g class="bars"><rect x="150" y="20" width="273.6" height="28" rx="4"/><rect x="150" y="62" width="243.2" height="28" rx="4"/><rect x="150" y="104" width="155.8" height="28" rx="4"/><rect x="150" y="146" width="87.4" height="28" rx="4" class="lo"/></g>
+            <g class="val"><text x="429" y="39">72%</text><text x="399" y="81">64%</text><text x="312" y="123">41%</text><text x="244" y="165">23%</text></g>
+          </svg>
+        </figure>
+        <div class="frames">
+          <div class="frame"><b>1. Topic:</b> The chart shows ___.</div>
+          <div class="frame"><b>2. Compare:</b> Most families have ___, but only ___% have ___.</div>
+          <div class="frame"><b>3. Recommend:</b> Families should ___ because ___.</div>
+        </div>
+        <textarea id="chartW" rows="5" aria-label="Three sentences about the chart"></textarea>
+        <div class="rowbar" style="margin:0"><span class="wc" id="chartWc"><b>0</b> sentences</span><button class="btn solid" id="chartChk">Coach check</button></div>
+        <div class="fb" id="chartFb"></div>
+      </section>
+
+      <section class="challenge">
+        <div class="coach-h"><span class="badge">Finished early?</span><h3>Challenge: Write the Announcement</h3></div>
+        <p class="prose">Write your own 60-second school announcement about a coming storm. Include <b>who</b>, <b>when</b>, <b>what students should do</b>, and at least <b>three signal words</b> (first, because, also, finally). Then read it aloud to your partner like a real announcer.</p>
+        <textarea id="ch1" rows="5" aria-label="Your announcement"></textarea>
+        <span class="wc" id="ch1wc"><b>0</b> words · aim for 80–120</span>
+      </section>
+
+      <details class="tcoach">
+        <summary>Teacher coaching guide · Station 1</summary>
+        <div class="tgrid">
+          <div><h5>Look-fors</h5><ul><li>Students listen for key details (who, when, what to do) on the first play.</li><li>Speakers use at least two signal words from the frames.</li><li>In the sentence builder, students find the subject and verb first.</li></ul></div>
+          <div><h5>Coaching prompts</h5><ul><li>“What was the main reason for the message?”</li><li>“Add one more reason with <i>In addition</i>.”</li><li>“Where does the verb go after the subject?”</li></ul></div>
+          <div><h5>Differentiate</h5><ul><li><b>Support:</b> Allow a third listen with the transcript, and let students speak from written notes.</li><li><b>Challenge:</b> Add a counterargument to the speech and explain why it is weaker.</li></ul></div>
+        </div>
+        <p class="note"><b>Answer key:</b> Part A: 1-B, 2-B, 3-C, 4-A. Part D: 1-C, 2-B, 3-A. Part E sample: The chart shows what LHS families have ready for a storm. Most families have water (72%), but only 23% have a written plan. Families should write a plan because everyone needs to know where to go.</p>
+      </details>
+    </div>
+  </article>
+
+  <!-- STATION 2 -->
+  <article class="panel" data-s="2" id="p2" hidden>
+    <div class="phead">
+      <div><div class="eyebrow">Station 2 · New Reading Skill</div><h2>Making Inferences: Read Between the Lines</h2></div>
+      <div class="mini" data-mini="2">30:00</div>
+    </div>
+    <div class="pbody">
+      <div class="objs">
+        <div class="obj"><b>Content objective</b><span>I can make an inference about characters and events in a text.</span></div>
+        <div class="obj"><b>Language objective</b><span>I can explain my inference using “The text says… I know… So I think…”</span></div>
+        <div class="obj"><b>Standards</b><span>MS RL/RI.9-10.1 (inference + evidence) · ELP 1, ELP 3, ELP 8</span></div>
+      </div>
+      <ul class="plan"><li><b>0–7</b> Teacher lesson</li><li><b>7–13</b> Read</li><li><b>13–20</b> We do</li><li><b>20–24</b> Quick infer</li><li><b>24–30</b> You do + exit</li></ul>
+
+      <section class="part">
+        <h3><span class="tag">LESSON</span>Watch the Teacher: Ms. Rivera</h3>
+        <p class="prose">Put on headphones and press <b>Play lesson</b>. The teacher will stop at “Your turn” so you can practice with a partner. Captions are always on.</p>
+        <div class="player" id="lesson2"></div>
+      </section>
+
+      <section class="coach">
+        <div class="coach-h"><span class="badge">Lesson Notes</span><h3>What is an inference?</h3></div>
+        <p class="prose">An <b>inference</b> is a smart guess you make using <b>clues from the text</b> plus <b>what you already know</b>. Authors do not tell you everything. Good readers figure out the rest.<br><span class="es">Una inferencia es una conclusión que haces con pistas del texto y lo que ya sabes.</span></p>
+        <div class="formula"><span>Text clue</span><i>+</i><span>What I know</span><i>=</i><span class="hl">Inference</span></div>
+        <ol class="steps">
+          <li><b>Read the question.</b> What does it want me to figure out? A feeling? A reason? What happens next?</li>
+          <li><b>Find a clue.</b> Look for words about actions, faces, voices, or the setting. Put your finger on it.</li>
+          <li><b>Add what you know.</b> When people act like this in real life, what does it usually mean?</li>
+          <li><b>Make the inference.</b> Say it with the frame, then check: does every clue still make sense?</li>
+        </ol>
+        <div class="frames">
+          <div class="frame"><b>It says:</b> The text says “___.”</div>
+          <div class="frame"><b>I know:</b> I know that when ___, it usually means ___.</div>
+          <div class="frame"><b>And so:</b> So I can infer that ___.</div>
+        </div>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">I DO</span>Watch the Coach Think Aloud</h3>
+        <div class="model">
+          <p class="mq"><b>Sentence:</b> Mr. Torres looked at the dark clouds, then quickly carried his lawn chairs into the garage.</p>
+          <p class="mq"><b>Question:</b> What does Mr. Torres think is going to happen?</p>
+          <ol class="think">
+            <li><b>Clue:</b> “looked at the dark clouds” and “quickly carried his lawn chairs into the garage.”</li>
+            <li><b>I know:</b> Dark clouds usually mean a storm. People put things away so the wind won’t blow them.</li>
+            <li><b>Inference:</b> So I can infer that Mr. Torres thinks a bad storm is coming soon.</li>
+            <li><b>Check:</b> The word “quickly” fits too. He is in a hurry because the storm is close.</li>
+          </ol>
+          <p class="note">Notice: the sentence never says “storm.” I figured it out.</p>
+        </div>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">READ</span>The Night Before Landfall</h3>
+        <p class="prose">Read the story two times. The second time, underline clues in your head about how people <b>feel</b> and <b>why</b> they act.</p>
+        <div class="passage">
+          <h4>The Night Before Landfall</h4>
+          <p><span class="pnum">¶1</span>On Tuesday night in Pascagoula, the grocery store shelves were almost empty. Only a few cans of soup and one bag of rice were left. Daniela’s mother put both in the cart without saying a word.</p>
+          <p><span class="pnum">¶2</span>At home, Daniela’s little brother, Mateo, kept asking questions. “Will the wind break our windows? Can we sleep in the hallway?” Daniela held his hand and smiled, but her own hand would not stop shaking.</p>
+          <p><span class="pnum">¶3</span>Their grandfather walked slowly to the shed and came back with a hammer and some old boards. He had lived through Hurricane Katrina in 2005. “This time,” he said quietly, “we will not wait.”</p>
+          <p><span class="pnum">¶4</span>Daniela’s phone buzzed again and again. Each new message from the weather service made her mother’s face more serious. Finally, her mother turned off the TV, opened the closet, and pulled out the big blue suitcase.</p>
+          <p><span class="pnum">¶5</span>“Pack one bag each,” she said. “Only what you really need.” Mateo ran to his room and came back holding just one thing: his school photo of the whole family.</p>
+        </div>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">WE DO</span>Infer With the Coach <span class="score" id="s2score"></span></h3>
+        <p class="prose">Try each question. Stuck? Tap <b>Coach me</b> to get one hint at a time. Try to use as few hints as you can.</p>
+        <div id="qB"></div>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">QUICK INFER</span>Clues in Everyday Life <span class="score" id="s2qscore"></span></h3>
+        <p class="prose">You make inferences outside of books, too. Read each message or sign and infer what is really happening.</p>
+        <div id="qQ"></div>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">YOU DO</span>Write Your Own Inference</h3>
+        <div class="callout"><b>Question.</b> What can you infer about Mateo from what he packed in ¶5? Use the three frames.</div>
+        <div class="grid3">
+          <label class="f">It says…<input type="text" id="inf1" placeholder="The text says Mateo took…"></label>
+          <label class="f">I know…<input type="text" id="inf2" placeholder="I know that people save things that…"></label>
+          <label class="f">And so…<input type="text" id="inf3" placeholder="So I can infer that Mateo…"></label>
+        </div>
+        <div class="rowbar" style="margin:0"><button class="btn solid" id="infCheck">Coach check</button></div>
+        <div class="fb" id="infFb"></div>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">EXIT</span>Rate Yourself</h3>
+        <div class="checks">
+          <label><input type="checkbox">I can explain what an inference is.</label>
+          <label><input type="checkbox">I can find a text clue that supports my idea.</label>
+          <label><input type="checkbox">I can connect the clue to what I already know.</label>
+        </div>
+      </section>
+
+      <section class="challenge">
+        <div class="coach-h"><span class="badge">Finished early?</span><h3>Challenge: Infer the Theme</h3></div>
+        <p class="prose"><b>Part 1.</b> What lesson about life does “The Night Before Landfall” teach? Support it with <b>two clues from two different paragraphs</b>.<br><b>Part 2.</b> Write one inference question of your own about the story. Trade with your partner and answer each other’s questions.</p>
+        <label class="f">Theme and two clues <small>The story teaches that ___. One clue is ___ (¶_). Another clue is ___ (¶_).</small><textarea id="ch2a" rows="4"></textarea></label>
+        <label class="f">My inference question for a partner<input type="text" id="ch2b" placeholder="Why do you think…?"></label>
+      </section>
+
+      <details class="tcoach">
+        <summary>Teacher coaching guide · Station 2</summary>
+        <div class="tgrid">
+          <div><h5>Look-fors</h5><ul><li>Students point to a specific phrase before answering.</li><li>They say “I know…” with a real-life connection, not a restated clue.</li><li>Their inference goes beyond what the text says directly.</li></ul></div>
+          <div><h5>Common misconceptions</h5><ul><li>Repeating a detail and calling it an inference. Ask: “Did the author say that? Then it’s not an inference.”</li><li>Guessing with no clue. Ask: “Which words made you think that?”</li><li>Using only one clue when two clues point the same way.</li></ul></div>
+          <div><h5>Coaching prompts</h5><ul><li>“Show me the words.”</li><li>“What does that usually mean in real life?”</li><li>“Does your idea still fit ¶4?”</li><li>“¿Qué pista te dio esa idea?”</li></ul></div>
+          <div><h5>Differentiate</h5><ul><li><b>Support:</b> Pair students, allow L1 discussion, and reveal the first hint for them.</li><li><b>Core:</b> Use the three frames as written.</li><li><b>Challenge:</b> Infer the theme of the story and support it with two clues from different paragraphs.</li></ul></div>
+        </div>
+        <p class="note"><b>Answer key:</b> We do: 1-B, 2-C, 3-A, 4-D, 5-B. Quick infer: 1-C, 2-A, 3-B. Challenge sample theme: Family and preparation matter more than things (¶3 Grandfather acts early; ¶5 Mateo packs only the family photo). You-do sample: The text says Mateo took only the family photo. I know people save things that matter most to them. So I can infer that Mateo cares most about his family being together and safe.</p>
+      </details>
+    </div>
+  </article>
+
+  <!-- STATION 3 -->
+  <article class="panel" data-s="3" id="p3" hidden>
+    <div class="phead">
+      <div><div class="eyebrow">Station 3 · New Writing Skill</div><h2>Complex Sentences: Connect Your Ideas</h2></div>
+      <div class="mini" data-mini="3">30:00</div>
+    </div>
+    <div class="pbody">
+      <div class="objs">
+        <div class="obj"><b>Content objective</b><span>I can combine two simple sentences into one complex sentence.</span></div>
+        <div class="obj"><b>Language objective</b><span>I can use <i>because, although, when, if,</i> and <i>so that</i> with correct commas.</span></div>
+        <div class="obj"><b>Standards</b><span>MS L.9-10.1b, L.9-10.2, W.9-10.1c · ELP 9, ELP 10</span></div>
+      </div>
+      <ul class="plan"><li><b>0–8</b> Teacher lesson</li><li><b>8–15</b> We do</li><li><b>15–24</b> You do</li><li><b>24–30</b> Apply + exit</li></ul>
+
+      <section class="part">
+        <h3><span class="tag">LESSON</span>Watch the Teacher: Mr. Okafor</h3>
+        <p class="prose">Put on headphones and press <b>Play lesson</b>. The teacher will stop at “Your turn” so you can practice with a partner. Captions are always on.</p>
+        <div class="player" id="lesson3"></div>
+      </section>
+
+      <section class="coach">
+        <div class="coach-h"><span class="badge">Lesson Notes</span><h3>What is a complex sentence?</h3></div>
+        <p class="prose">A <b>complex sentence</b> joins two ideas with a <b>connecting word</b> (a subordinating conjunction). It shows <i>how</i> the ideas are related. This makes your writing sound more academic, and ELPA21 writing scores reward it.<br><span class="es">Una oración compleja une dos ideas con una palabra de enlace como “because” (porque) o “although” (aunque).</span></p>
+        <div class="tbl"><table class="rubric conj">
+          <tr><th>Word</th><th>Shows</th><th>Español</th><th>Example</th></tr>
+          <tr><td><b>because</b></td><td>reason</td><td>porque</td><td>We left early <u>because</u> the roads were flooding.</td></tr>
+          <tr><td><b>although</b></td><td>contrast</td><td>aunque</td><td><u>Although</u> the rain stopped, the wind was still strong.</td></tr>
+          <tr><td><b>when</b></td><td>time</td><td>cuando</td><td><u>When</u> the siren sounds, go to the hallway.</td></tr>
+          <tr><td><b>if</b></td><td>condition</td><td>si</td><td><u>If</u> the power goes out, use a flashlight.</td></tr>
+          <tr><td><b>so that</b></td><td>purpose</td><td>para que</td><td>We charged our phones <u>so that</u> we could call for help.</td></tr>
+        </table></div>
+        <div class="callout"><b>Comma rule.</b> If the connecting word comes <b>first</b>, put a comma after the first idea: <i>Because the roads flooded<b>,</b> we stayed home.</i> If it comes in the <b>middle</b>, you usually don’t need a comma: <i>We stayed home because the roads flooded.</i></div>
+        <ol class="steps">
+          <li><b>Read both sentences.</b> What is the relationship: reason, contrast, time, condition, or purpose?</li>
+          <li><b>Choose the connecting word</b> that matches the relationship.</li>
+          <li><b>Join and cut.</b> Put the sentences together and remove extra words or repeated names.</li>
+          <li><b>Check the comma</b> and the capital letter. Read it aloud to hear whether it sounds complete.</li>
+        </ol>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">I DO</span>Watch the Coach Combine</h3>
+        <div class="model">
+          <p class="mq"><b>Sentence A:</b> The store ran out of water. <b>Sentence B:</b> Many families were preparing for the hurricane.</p>
+          <ol class="think">
+            <li><b>Relationship:</b> Why did the store run out? Because families were preparing. That is a <b>reason</b>.</li>
+            <li><b>Word:</b> A reason means <b>because</b>.</li>
+            <li><b>Join:</b> The store ran out of water <u>because</u> many families were preparing for the hurricane.</li>
+            <li><b>Check:</b> “Because” is in the middle, so no comma. Moving it to the front gives: <i>Because many families were preparing for the hurricane, the store ran out of water.</i> Now it needs a comma.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">WE DO</span>Pick the Right Connector</h3>
+        <p class="prose">Choose the word that shows the correct relationship. Use <b>Coach me</b> if you need it.</p>
+        <div id="qC"></div>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">YOU DO</span>Combine the Sentences <span class="score" id="s3score"></span></h3>
+        <p class="prose">Write one complex sentence for each pair. Use the word shown. The coach will check your connecting word, comma, capital letter and end mark.</p>
+        <div id="combos"></div>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">APPLY</span>Mini-Paragraph</h3>
+        <div class="callout"><b>Prompt.</b> In 3–5 sentences, tell how your family could get ready for a hurricane. Use <b>at least three different</b> connecting words.</div>
+        <textarea id="draft" rows="7" aria-label="Mini-paragraph"></textarea>
+        <div class="rowbar" style="margin:0">
+          <span class="wc" id="dwc"><b>0</b> words</span>
+          <span class="wc" id="dtr">Connecting words used: <b>0</b> / 3</span>
+          <button class="btn" id="copyD">Copy my paragraph</button>
+          <span class="note" id="copyMsg"></span>
+        </div>
+        <div class="words" id="usedList"></div>
+      </section>
+
+      <section class="part">
+        <h3><span class="tag">EXIT</span>Rate Yourself</h3>
+        <div class="checks">
+          <label><input type="checkbox">I can choose a connecting word that matches the relationship.</label>
+          <label><input type="checkbox">I can put the comma in the right place.</label>
+          <label><input type="checkbox">I used three different connecting words in my paragraph.</label>
+        </div>
+      </section>
+
+      <section class="challenge">
+        <div class="coach-h"><span class="badge">Finished early?</span><h3>Challenge: Fix the Choppy Paragraph</h3></div>
+        <p class="prose">Rewrite this paragraph using <b>four complex sentences</b>. Try at least one of these harder connecting words: <i>unless, even though, since, before, after</i>.</p>
+        <div class="passage"><p>The storm was coming. My family went to the store. The store was crowded. We found water. My dad bought batteries. The power might go out. We got home. It started to rain. My sister was scared. We stayed calm.</p></div>
+        <textarea id="ch3" rows="6" aria-label="Rewritten paragraph"></textarea>
+        <span class="wc" id="ch3wc">Connecting words used: <b>0</b> / 4</span>
+      </section>
+
+      <details class="tcoach">
+        <summary>Teacher coaching guide · Station 3</summary>
+        <div class="tgrid">
+          <div><h5>Look-fors</h5><ul><li>Students name the relationship before choosing a word.</li><li>The comma is placed correctly when the sentence opens with the clause.</li><li>They remove repeated subjects when joining (“The family… The family…”).</li></ul></div>
+          <div><h5>Common errors</h5><ul><li><b>Fragments:</b> “Because the wind was strong.” Ask: “Because… what happened?”</li><li><b>Double connectors:</b> “Although it rained, but we went.” Spanish speakers may transfer <i>aunque… pero</i>. Keep only one.</li><li>Using <i>because</i> for everything.</li></ul></div>
+          <div><h5>Coaching prompts</h5><ul><li>“Is this a reason, a contrast, or a time?”</li><li>“Read it aloud. Does it sound finished?”</li><li>“Where does the comma go if you flip it?”</li><li>“¿Qué relación hay entre las dos ideas?”</li></ul></div>
+          <div><h5>Differentiate</h5><ul><li><b>Support:</b> Give students only <i>because</i> and <i>when</i> first, and accept the connector in the middle position.</li><li><b>Core:</b> Use all five words.</li><li><b>Challenge:</b> Add <i>unless</i>, <i>even though</i> and <i>since</i>, and start two sentences with the clause.</li></ul></div>
+        </div>
+        <p class="note"><b>Answer key (We do):</b> 1-B because, 2-A although, 3-C when, 4-D so that, 5-B if. You-do samples: (1) Although the storm was far away, families started preparing. (2) We moved to the hallway when the wind got stronger. (3) If the power goes out, we will use flashlights. (4) Grandpa boarded the windows so that the glass would not break. Challenge sample: Since the storm was coming, my family went to the store. Even though the store was crowded, we found water. My dad bought batteries because the power might go out. After we got home, it started to rain.</p>
+      </details>
+    </div>
+  </article>
+
+  <footer>Storm Studio · EL Publishing · Laurel High School</footer>
+</div>
+
+<script>
+(()=>{
+const DUR=30*60*1000;
+const STATIONS=[
+ {n:1,title:"ELPA21 Practice",sub:"Listen, speak, build sentences"},
+ {n:2,title:"Reading: Inference",sub:"New skill with a built-in coach"},
+ {n:3,title:"Writing: Complex Sentences",sub:"New skill with a built-in coach"}];
+const C=2*Math.PI*42;
+const T={};let soundOn=true;let ctx=null;
+
+const board=document.getElementById('board');
+STATIONS.forEach(s=>{
+  const el=document.createElement('div');
+  el.className='st';el.dataset.s=s.n;el.tabIndex=0;el.setAttribute('role','button');
+  el.setAttribute('aria-label','Open station '+s.n);
+  el.innerHTML=`<div class="ring"><svg viewBox="0 0 100 100"><circle class="track" cx="50" cy="50" r="42"/><circle class="bar" cx="50" cy="50" r="42" stroke-dasharray="${C}" stroke-dashoffset="0"/></svg><div class="t">30:00</div></div>
+  <div><div class="num">STATION ${s.n}</div><h2>${s.title}</h2><p>${s.sub}</p>
+  <div class="ctrls"><button class="btn solid" data-a="go">Start</button><button class="btn" data-a="reset">Reset</button></div></div>`;
+  board.appendChild(el);
+  T[s.n]={el,left:DUR,end:null,running:false,rang:false};
+  el.addEventListener('click',e=>{
+    const a=e.target.closest('button')?.dataset.a;
+    if(a==='go'){toggle(s.n);return}
+    if(a==='reset'){reset(s.n);return}
+    show(s.n);
+  });
+  el.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===el){e.preventDefault();show(s.n)}});
+});
+
+function fmt(ms){const s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function paint(n){
+  const t=T[n];const left=t.running?t.end-Date.now():t.left;
+  const txt=fmt(left);
+  t.el.querySelector('.t').textContent=txt;
+  t.el.querySelector('.bar').style.strokeDashoffset=C*(1-Math.max(0,left)/DUR);
+  document.querySelectorAll(`[data-mini="${n}"]`).forEach(m=>m.textContent=txt);
+  const b=t.el.querySelector('[data-a="go"]');
+  b.textContent=left<=0?'Done':t.running?'Pause':(t.left<DUR?'Resume':'Start');
+  b.disabled=left<=0;
+  t.el.classList.toggle('done',left<=0);
+}
+function toggle(n){const t=T[n];unlock();
+  if(t.running){t.left=t.end-Date.now();t.running=false}
+  else if(t.left>0){t.end=Date.now()+t.left;t.running=true}
+  paint(n);wake()}
+function reset(n){const t=T[n];t.running=false;t.left=DUR;t.rang=false;paint(n)}
+function tick(){for(const n in T){const t=T[n];
+  if(t.running&&t.end-Date.now()<=0){t.running=false;t.left=0;if(!t.rang){t.rang=true;chime()}}
+  paint(n)}}
+setInterval(tick,250);
+
+function unlock(){try{if(!ctx)ctx=new (window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume()}catch(e){}}
+function chime(){if(!soundOn||!ctx)return;try{[0,0.35,0.7].forEach((d,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.value=[660,880,1046][i];g.gain.setValueAtTime(0.0001,ctx.currentTime+d);g.gain.exponentialRampToValueAtTime(0.3,ctx.currentTime+d+0.02);g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+d+0.6);o.connect(g).connect(ctx.destination);o.start(ctx.currentTime+d);o.stop(ctx.currentTime+d+0.65)})}catch(e){}}
+let lock=null;async function wake(){try{if(!lock&&navigator.wakeLock)lock=await navigator.wakeLock.request('screen')}catch(e){}}
+
+document.getElementById('allStart').onclick=()=>{for(const n in T){if(!T[n].running&&T[n].left>0)toggle(n)}};
+document.getElementById('allPause').onclick=()=>{for(const n in T){if(T[n].running)toggle(n)}};
+document.getElementById('allReset').onclick=()=>{for(const n in T)reset(n)};
+const sb=document.getElementById('sound');
+sb.onclick=()=>{soundOn=!soundOn;sb.textContent='Sound: '+(soundOn?'on':'off');sb.setAttribute('aria-pressed',soundOn)};
+
+function show(n){
+  [1,2,3].forEach(i=>{document.getElementById('p'+i).hidden=i!==n;T[i].el.setAttribute('aria-current',i===n)});
+  if(location.hash!=='#station-'+n)history.replaceState(null,'','#station-'+n);
+}
+function fromHash(){const m=location.hash.match(/station-(\d)/);show(m?+m[1]:1)}
+window.addEventListener('hashchange',fromHash);fromHash();
+for(const n in T)paint(n);
+
+/* ---------- quiz helper ---------- */
+function quiz(host,items,scoreEl){
+  const state={};
+  items.forEach((it,qi)=>{
+    const q=document.createElement('div');q.className='q';
+    q.innerHTML=`<div class="stem">${qi+1}. ${it.q}</div><div class="opts"></div><div class="fb"></div>`+(it.hints?`<div class="rowbar" style="margin:8px 0 0"><button class="btn hintbtn" type="button">Coach me (${it.hints.length} hints)</button></div><ol class="hints"></ol>`:'');
+    const opts=q.querySelector('.opts'),fb=q.querySelector('.fb');
+    if(it.hints){let h=0;const hb=q.querySelector('.hintbtn'),hl=q.querySelector('.hints');
+      hb.onclick=()=>{if(h>=it.hints.length)return;const li=document.createElement('li');li.innerHTML='<b>Coach:</b> '+it.hints[h];hl.appendChild(li);h++;
+        hb.textContent=h>=it.hints.length?'No more hints':`Next hint (${it.hints.length-h} left)`;if(h>=it.hints.length)hb.disabled=true}}
+    it.o.forEach((txt,oi)=>{
+      const b=document.createElement('button');b.className='opt';b.type='button';b.setAttribute('aria-pressed','false');
+      b.innerHTML=`<span class="L">${'ABCD'[oi]}</span><span>${txt}</span>`;
+      b.onclick=()=>{
+        opts.querySelectorAll('.opt').forEach(x=>{x.setAttribute('aria-pressed','false');x.classList.remove('right','wrong')});
+        b.setAttribute('aria-pressed','true');
+        const ok=oi===it.a;b.classList.add(ok?'right':'wrong');
+        fb.className='fb '+(ok?'ok':'no');fb.textContent=ok?'Correct. '+(it.why||''):'Try again. '+(it.hint||'Look back at the text.');
+        state[qi]=ok;
+        if(scoreEl){const c=Object.values(state).filter(Boolean).length;scoreEl.textContent=`· ${c}/${items.length}`}
+      };
+      opts.appendChild(b);
+    });
+    host.appendChild(q);
+  });
+}
+
+/* ---------- Station 1 ---------- */
+const SCRIPT="Good morning, Laurel High School. This is an important weather message. The National Weather Service says a tropical storm in the Gulf of Mexico may become a hurricane by Thursday. It is expected to bring heavy rain and strong winds to South Mississippi on Friday afternoon. Because of the storm, all after-school activities on Friday are canceled. Students should take home their Chromebooks and chargers on Thursday. Please check the school website and your phone messages for updates this weekend. Stay safe, and make sure your family has a plan.";
+document.getElementById('scriptText').textContent=SCRIPT;
+let plays=2;const pl=document.getElementById('plays'),pb=document.getElementById('play');
+pb.onclick=()=>{
+  if(!('speechSynthesis' in window)){pl.textContent='Audio is not available on this device. Ask your teacher to read it aloud.';return}
+  if(plays<=0)return;
+  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(SCRIPT);u.rate=0.9;u.lang='en-US';
+  speechSynthesis.speak(u);plays--;pl.textContent='Plays left: '+plays;if(plays<=0)pb.disabled=true;
+};
+const sc=document.getElementById('script');
+document.getElementById('showScript').onclick=e=>{sc.hidden=!sc.hidden;e.target.textContent=sc.hidden?'Show transcript (teacher only)':'Hide transcript'};
+quiz(document.getElementById('qA'),[
+ {q:"What is the main purpose of the announcement?",o:["To teach students about weather science","To warn students about a storm and change plans","To invite families to a school event","To explain how to charge a Chromebook"],a:1,why:"The message warns about the storm and cancels activities."},
+ {q:"When is the storm expected to reach South Mississippi?",o:["Thursday morning","Friday afternoon","Saturday night","This weekend only"],a:1},
+ {q:"What should students do on Thursday?",o:["Stay home from school","Go to after-school practice","Take home their Chromebooks and chargers","Call the National Weather Service"],a:2},
+ {q:"Why are after-school activities canceled?",o:["Because of the storm","Because school is closing early for a holiday","Because the website is down","Because of a test"],a:0,why:"The speaker says “Because of the storm…”"}
+]);
+const BUILD=[
+ "Families should pack water and food before the storm arrives.",
+ "The hurricane became weaker after it moved over land.",
+ "If the winds reach 74 miles per hour, the storm is a hurricane.",
+ "Although the rain stopped, the river kept rising.",
+ "Students should check the website when the storm is over."];
+const bh=document.getElementById('builders');
+BUILD.forEach((sent,i)=>{
+  const words=sent.split(' ');const shuffled=[...words].map((w,k)=>({w,k})).sort(()=>Math.random()-.5);
+  const box=document.createElement('div');box.className='builder q';
+  box.innerHTML=`<div class="stem">Sentence ${i+1}</div><div class="line" aria-label="Your sentence"></div><div class="bank" aria-label="Word bank"></div><div class="rowbar" style="margin:0"><button class="btn solid">Check</button><button class="btn">Clear</button></div><div class="fb"></div>`;
+  const line=box.querySelector('.line'),bank=box.querySelector('.bank'),fb=box.querySelector('.fb');
+  const [chk,clr]=box.querySelectorAll('.rowbar .btn');
+  shuffled.forEach(({w})=>{const t=document.createElement('button');t.type='button';t.className='tile';t.textContent=w;
+    t.onclick=()=>{(t.parentElement===bank?line:bank).appendChild(t);fb.textContent=''};bank.appendChild(t)});
+  chk.onclick=()=>{const got=[...line.children].map(x=>x.textContent).join(' ');
+    if(bank.children.length){fb.className='fb no';fb.textContent='Use all of the words.';return}
+    const ok=got===sent;fb.className='fb '+(ok?'ok':'no');fb.textContent=ok?'Correct! Read it out loud to your partner.':'Not yet. Check the capital letter and where the verb goes.'};
+  clr.onclick=()=>{[...line.children].forEach(t=>bank.appendChild(t));fb.textContent=''};
+  bh.appendChild(box);
+});
+
+function wc(s){return (s.trim().match(/\S+/g)||[]).length}
+function store(id){const el=document.getElementById(id);if(!el)return;try{const v=localStorage.getItem('ss_'+id);if(v)el.value=v}catch(e){}
+  el.addEventListener('input',()=>{try{localStorage.setItem('ss_'+id,el.value)}catch(e){}})}
+/* ---------- Station 2: Inference ---------- */
+quiz(document.getElementById('qB'),[
+ {q:"In ¶1, the shelves were almost empty. What can you infer?",o:["The store was closing forever","Many people were buying supplies before the storm","Nobody likes soup or rice","The store never sells food"],a:1,
+  hints:["Find the clue: “shelves were almost empty” on Tuesday night.","What do you know? What do people buy right before a hurricane?","Empty shelves + storm coming = lots of people shopping for supplies."],why:"Empty shelves are a clue that many families got there first to prepare."},
+ {q:"In ¶2, how does Daniela really feel?",o:["Calm and relaxed","Bored","Scared, but trying to be brave for Mateo","Angry at her brother"],a:2,
+  hints:["Look at two clues: she “smiled,” but her hand “would not stop shaking.”","I know that shaking hands usually mean someone is nervous or afraid.","She smiles for Mateo, but her body shows she is scared."],why:"The smile is for Mateo. The shaking hand shows her real feeling."},
+ {q:"Why does Grandfather say, “This time, we will not wait” (¶3)?",o:["He remembers that waiting during Katrina was dangerous","He is late for work","He wants to build a new shed","He doesn’t believe the weather report"],a:0,
+  hints:["Which earlier event does ¶3 mention?","“This time” suggests a different time in the past. What happened then?","He lived through Katrina, so he learned not to wait to prepare."],why:"His Katrina experience taught him to act early."},
+ {q:"What does the big blue suitcase in ¶4 tell you?",o:["The family is going on vacation","Mother wants to clean the closet","The TV is broken","The family has decided to evacuate"],a:3,
+  hints:["What does Mother do right before getting the suitcase?","The messages make her face more serious. Then she turns off the TV. What is she deciding?","A suitcase + serious warnings = leaving home before the storm."],why:"Serious warnings plus packing tell us they are leaving to stay safe."},
+ {q:"Which clue BEST supports the inference that the storm is very dangerous?",o:["“Only a few cans of soup… were left.”","“Each new message… made her mother’s face more serious.”","“Daniela held his hand.”","“He walked slowly to the shed.”"],a:1,
+  hints:["You need the clue that shows the danger growing.","Which clue changes as more information arrives?","The warnings keep getting worse, and Mother reacts each time."],why:"The repeated, more serious warnings show the danger is increasing."}
+],document.getElementById('s2score'));
+
+['inf1','inf2','inf3'].forEach(store);
+document.getElementById('infCheck').onclick=()=>{
+  const a=v('inf1'),b=v('inf2'),c=v('inf3'),fb=document.getElementById('infFb');const tips=[];
+  if(!/photo|picture|family/.test(a))tips.push("It says: name what Mateo packed (the family photo).");
+  if(wc(b)<5)tips.push("I know: add a real-life idea, like why people keep special things.");
+  if(!/(infer|think|means|shows)/.test(c)||wc(c)<6)tips.push("And so: start with “So I can infer that Mateo…” and tell what he cares about or feels.");
+  if(c&&a&&c.replace(/\W/g,'')===a.replace(/\W/g,''))tips.push("Your inference repeats the clue. Go beyond what the text says.");
+  fb.className='fb '+(tips.length?'no':'ok');
+  fb.innerHTML=tips.length?'<b>Coach:</b> '+tips.join(' '):'<b>Coach:</b> Strong inference! You used a clue, your own knowledge, and went beyond the text. Read it to a partner.';
+};
+function v(id){return document.getElementById(id).value.trim().toLowerCase()}
+
+/* ---------- Station 3: Complex sentences ---------- */
+quiz(document.getElementById('qC'),[
+ {q:"We stayed inside ___ the wind was too strong.",o:["although","because","if","so that"],a:1,hints:["Ask: why did we stay inside?","The second part gives a reason.","Reason → because."]},
+ {q:"___ the storm was small, it still caused flooding.",o:["Although","Because","When","So that"],a:0,hints:["Small storm… but it still caused flooding. Is that surprising?","Two ideas that go against each other = contrast.","Contrast → although."]},
+ {q:"___ the siren sounds, students go to the hallway.",o:["Although","So that","When","Because"],a:2,hints:["This tells us the time the action happens.","At the moment the siren sounds…","Time → when."]},
+ {q:"We bought batteries ___ we could use our flashlights.",o:["although","when","if","so that"],a:3,hints:["What was the goal of buying batteries?","The second part tells the purpose.","Purpose → so that."]},
+ {q:"___ the bridge closes, we will take Highway 49.",o:["Because","If","Although","So that"],a:1,hints:["Do we know for sure that the bridge will close?","It might happen. That is a condition.","Condition → if."]}
+],document.getElementById('s3score'));
+
+const COMBO=[
+ {a:"The storm was far away.",b:"Families started preparing.",w:"although",model:"Although the storm was far away, families started preparing."},
+ {a:"The wind got stronger.",b:"We moved to the hallway.",w:"when",model:"We moved to the hallway when the wind got stronger."},
+ {a:"The power goes out.",b:"We will use flashlights.",w:"if",model:"If the power goes out, we will use flashlights."},
+ {a:"Grandpa boarded the windows.",b:"The glass would not break.",w:"so that",model:"Grandpa boarded the windows so that the glass would not break."}];
+const ch=document.getElementById('combos');const comboOk={};
+COMBO.forEach((c,i)=>{
+  const box=document.createElement('div');box.className='q';
+  box.innerHTML=`<div class="stem">${i+1}. ${c.a} + ${c.b} <span class="wpill">${c.w}</span></div>
+  <input type="text" id="cmb${i}" aria-label="Combined sentence ${i+1}">
+  <div class="rowbar" style="margin:6px 0 0"><button class="btn solid">Coach check</button><button class="btn">Show model</button></div><div class="fb"></div>`;
+  ch.appendChild(box);store('cmb'+i);
+  const inp=box.querySelector('input'),fb=box.querySelector('.fb'),[chk,mod]=box.querySelectorAll('.btn');
+  chk.onclick=()=>{
+    const s=inp.value.trim(),low=s.toLowerCase(),tips=[];
+    if(wc(s)<6)tips.push("Write the whole combined sentence.");
+    if(!new RegExp('\\b'+c.w+'\\b').test(low))tips.push(`Use the word “${c.w}.”`);
+    if(s&&s[0]!==s[0].toUpperCase())tips.push("Start with a capital letter.");
+    if(s&&!/[.!?]$/.test(s))tips.push("End with a period.");
+    if(low.startsWith(c.w)&&!s.includes(','))tips.push(`It starts with “${c.w},” so add a comma after the first idea.`);
+    if(/\b(but|and)\b/.test(low)&&c.w==='although')tips.push("Don’t use “but” with “although.” Keep only one.");
+    if((low.match(/\./g)||[]).length>1)tips.push("Make it ONE sentence. Remove the extra period.");
+    const ok=!tips.length;comboOk[i]=ok;
+    fb.className='fb '+(ok?'ok':'no');fb.innerHTML='<b>Coach:</b> '+(ok?'Great complex sentence! Now try flipping the order and moving the comma.':tips.join(' '));
+    document.getElementById('s3score').textContent=`· ${Object.values(comboOk).filter(Boolean).length}/${COMBO.length} combined`;
+  };
+  mod.onclick=()=>{fb.className='fb';fb.innerHTML='<b>Model:</b> '+c.model+' <i>(Other correct answers are possible.)</i>'};
+});
+
+store('draft');
+const dr=document.getElementById('draft');
+const CJ=["because","although","when","if","so that","even though","since","unless","while","before","after"];
+const du=()=>{document.getElementById('dwc').innerHTML=`<b>${wc(dr.value)}</b> words`;
+  const low=' '+dr.value.toLowerCase()+' ';
+  const used=CJ.filter(w=>new RegExp('\\b'+w+'\\b').test(low));
+  const n=used.includes('so that')?used.length:used.length;
+  document.getElementById('dtr').innerHTML=`Connecting words used: <b>${n}</b> / 3${n>=3?' ✓':''}`;
+  document.getElementById('usedList').innerHTML=used.map(w=>`<span>${w}</span>`).join('')};
+dr.addEventListener('input',du);du();
+document.getElementById('copyD').onclick=()=>{const m=document.getElementById('copyMsg');
+  navigator.clipboard.writeText(dr.value).then(()=>m.textContent='Copied. Paste it into Google Classroom.').catch(()=>{dr.select();m.textContent='Text selected. Press Ctrl+C to copy.'})};
+
+/* ---------- additions: Station 1 D/E, Station 2 quick infer, challenges ---------- */
+quiz(document.getElementById('qD'),[
+ {q:"Which sentence is the BEST summary of the notice?",o:["Students must call the front office every day.","Chromebooks are not allowed at school during storms.","The notice explains how the school will communicate and keep students safe before, during, and after a hurricane.","School will close for one week after every storm."],a:2,why:"A summary covers the whole text, not one detail."},
+ {q:"What will students do if the power goes out at school?",o:["Go home on the bus","Move to the first-floor interior hallways","Call their families","Wait in the parking lot"],a:1},
+ {q:"In the notice, “interior” hallways are hallways that are…",o:["inside the building, away from windows","outside the building","on the top floor","closed to students"],a:0,why:"Interior means inside. Inside hallways are safer from wind and glass."}
+]);
+store('chartW');
+const cw=document.getElementById('chartW');
+const sentN=s=>(s.match(/[.!?](\s|$)/g)||[]).length;
+const cwu=()=>document.getElementById('chartWc').innerHTML=`<b>${sentN(cw.value)}</b> sentences`;cw.addEventListener('input',cwu);cwu();
+document.getElementById('chartChk').onclick=()=>{const t=cw.value.toLowerCase(),tips=[],fb=document.getElementById('chartFb');
+  if(sentN(cw.value)<3)tips.push("Write three complete sentences, each ending with a period.");
+  if(!/chart|survey|graph/.test(t))tips.push("Sentence 1: say what the chart shows (“The chart shows…”).");
+  if(!/\d/.test(t))tips.push("Use at least one number from the chart, like 72%.");
+  if(!/(most|least|more than|fewer|less than|only|highest|lowest)/.test(t))tips.push("Sentence 2: compare with a word like most, only, more than, or least.");
+  if(!/should/.test(t))tips.push("Sentence 3: give a recommendation with “should.”");
+  fb.className='fb '+(tips.length?'no':'ok');fb.innerHTML='<b>Coach:</b> '+(tips.length?tips.join(' '):'Excellent! You described, compared, and recommended. That is what ELPA21 scorers look for.')};
+quiz(document.getElementById('qQ'),[
+ {q:'<div class="msg"><span class="who">Mom</span>Where are you?? The bus left 20 minutes ago 😟</div>What can you infer?',o:["Mom is happy because her child is early","Mom is on the bus","The student did not get on the bus, and Mom is worried","The bus is broken"],a:2,
+  hints:["Find two clues: “Where are you??” and “The bus left 20 minutes ago.”","The two question marks and the face show a feeling. Which one?","The student missed the bus, and Mom is worried."]},
+ {q:'<div class="sign">GYM CLOSED UNTIL MONDAY<br>Sorry about the wet floors!</div>The sign is posted the day after a big storm. What can you infer?',o:["Water from the storm got into the gym","The gym is being painted","There is a basketball game today","The gym floor was just cleaned with soap"],a:0,
+  hints:["Clues: “closed,” “wet floors,” and “the day after a big storm.”","What can a big storm bring inside a building?","Storm water got into the gym, so it has to dry and be cleaned."]},
+ {q:'<div class="msg"><span class="who">Coach Lee → Team</span>Take your practice clothes home tonight. Don’t leave anything in your locker.</div>What can you infer?',o:["Practice is longer tomorrow","School might be closed for a few days","The lockers are being painted blue","Coach Lee is leaving the team"],a:1,
+  hints:["Why would you take everything home from your locker?","Think about what you learned at Station 1 about storm days.","School may close, so students need their things at home."]}
+],document.getElementById('s2qscore'));
+['ch1','ch2a','ch2b','ch3'].forEach(store);
+const c1=document.getElementById('ch1');const c1u=()=>document.getElementById('ch1wc').innerHTML=`<b>${wc(c1.value)}</b> words · aim for 80–120`;c1.addEventListener('input',c1u);c1u();
+const c3=document.getElementById('ch3');const c3u=()=>{const low=c3.value.toLowerCase();const n=CJ.filter(w=>new RegExp('\\b'+w+'\\b').test(low)).length;document.getElementById('ch3wc').innerHTML=`Connecting words used: <b>${n}</b> / 4${n>=4?' ✓':''}`};c3.addEventListener('input',c3u);c3u();
+
+/* ---------- Teacher lesson player ---------- */
+function teacherSVG(t){return `<svg viewBox="0 0 160 220" class="tsvg" aria-hidden="true">
+  <rect x="38" y="120" width="84" height="100" rx="26" fill="${t.shirt}"/>
+  <path d="M68 120 L80 140 L92 120" fill="none" stroke="#fff" stroke-width="4" opacity=".8"/>
+  <g class="arm"><path d="M116 136 L146 104" stroke="${t.shirt}" stroke-width="16" stroke-linecap="round"/><circle cx="149" cy="100" r="9" fill="${t.skin}"/></g>
+  <rect x="34" y="132" width="16" height="58" rx="8" fill="${t.shirt}"/>
+  <rect x="70" y="100" width="20" height="24" rx="6" fill="${t.skin}"/>
+  <path d="${t.hairBack}" fill="${t.hair}"/>
+  <ellipse cx="80" cy="72" rx="34" ry="38" fill="${t.skin}"/>
+  <path d="${t.hairFront}" fill="${t.hair}"/>
+  <g class="eyes"><ellipse cx="67" cy="72" rx="4" ry="5" fill="#1b1b1b"/><ellipse cx="93" cy="72" rx="4" ry="5" fill="#1b1b1b"/></g>
+  <path d="M60 62 q7 -5 14 0 M86 62 q7 -5 14 0" stroke="${t.hair}" stroke-width="3" fill="none" stroke-linecap="round"/>
+  ${t.glasses?'<g fill="none" stroke="#1b1b1b" stroke-width="2.5"><circle cx="67" cy="72" r="10"/><circle cx="93" cy="72" r="10"/><path d="M77 72h6"/></g>':''}
+  <ellipse class="mouth" cx="80" cy="92" rx="9" ry="4" fill="#7a2b2b"/>
+  <circle cx="58" cy="86" r="5" fill="#e88a7a" opacity=".35"/><circle cx="102" cy="86" r="5" fill="#e88a7a" opacity=".35"/>
+</svg>`}
+
+function lessonPlayer(host,cfg){
+  const S=cfg.slides;let i=0,auto=false,speaking=false;
+  host.innerHTML=`
+  <div class="pl-stage">
+    <div class="pl-teacher"><div class="pl-fig">${teacherSVG(cfg.look)}</div><div class="pl-name">${cfg.name}<small>${cfg.role}</small></div></div>
+    <div class="pl-board"><div class="pl-step"></div><div class="pl-content"></div></div>
+  </div>
+  <div class="pl-bubble" aria-live="polite"><p class="pl-say"></p><p class="pl-es es" hidden></p></div>
+  <div class="pl-bar">
+    <button class="btn" data-a="prev" aria-label="Previous slide">◀ Back</button>
+    <button class="btn solid" data-a="play">▶ Play lesson</button>
+    <button class="btn" data-a="next" aria-label="Next slide">Next ▶</button>
+    <button class="btn" data-a="es" aria-pressed="false">Español</button>
+    <div class="pl-dots" role="tablist"></div>
+  </div>
+  <p class="note pl-msg"></p>`;
+  const $=s=>host.querySelector(s);const fig=$('.pl-fig');
+  const dots=$('.pl-dots');S.forEach((_,k)=>{const d=document.createElement('button');d.type='button';d.className='pl-dot';d.setAttribute('aria-label','Slide '+(k+1));d.onclick=()=>{stop();go(k)};dots.appendChild(d)});
+  const voiceOk='speechSynthesis' in window;
+  if(!voiceOk)$('.pl-msg').textContent='Audio is not available on this device. Read the captions, or ask your teacher.';
+  function pickVoice(){if(!voiceOk)return null;const vs=speechSynthesis.getVoices().filter(v=>/^en(-|_)US/i.test(v.lang));
+    return vs.find(v=>cfg.voiceHint.test(v.name))||vs[0]||null}
+  function render(){
+    const s=S[i];$('.pl-step').textContent=`Step ${i+1} of ${S.length} · ${s.label}`;
+    $('.pl-content').innerHTML=s.board;$('.pl-say').textContent=s.say;$('.pl-es').textContent=s.es||'';
+    [...dots.children].forEach((d,k)=>d.setAttribute('aria-current',k===i));
+    $('[data-a="prev"]').disabled=i===0;$('[data-a="next"]').textContent=i===S.length-1?'Start over ↺':'Next ▶';
+    host.querySelectorAll('.pl-reveal').forEach(b=>b.onclick=()=>{b.nextElementSibling.hidden=false;b.remove()});
+  }
+  function speak(){if(!voiceOk){if(auto)setTimeout(()=>{if(auto&&i<S.length-1){go(i+1);speak()}else stop()},Math.max(4000,S[i].say.length*60));return}
+    speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(S[i].say.replace(/[“”]/g,''));u.rate=.92;u.lang='en-US';const v=pickVoice();if(v)u.voice=v;
+    u.onstart=()=>{speaking=true;fig.classList.add('talking')};
+    u.onend=()=>{speaking=false;fig.classList.remove('talking');if(auto){if(i<S.length-1&&!S[i].pause){setTimeout(()=>{if(auto){go(i+1);speak()}},700)}else{auto=false;setPlay()}}};
+    u.onerror=()=>{fig.classList.remove('talking')};
+    speechSynthesis.speak(u)}
+  function setPlay(){$('[data-a="play"]').textContent=auto?'❚❚ Pause':(S[i].pause&&i<S.length-1?'▶ Continue':'▶ Play lesson')}
+  function stop(){auto=false;if(voiceOk)speechSynthesis.cancel();fig.classList.remove('talking');setPlay()}
+  function go(k){i=(k+S.length)%S.length;render();setPlay()}
+  host.addEventListener('click',e=>{const a=e.target.closest('[data-a]')?.dataset.a;if(!a)return;
+    if(a==='play'){if(auto){stop();return}if(S[i].pause&&i<S.length-1&&!speaking){go(i+1)}auto=true;setPlay();speak()}
+    if(a==='next'){stop();go(i===S.length-1?0:i+1);speak()}
+    if(a==='prev'){stop();go(i-1);speak()}
+    if(a==='es'){const p=$('.pl-es');p.hidden=!p.hidden;e.target.setAttribute('aria-pressed',!p.hidden)}
+  });
+  render();setPlay();
+}
+
+lessonPlayer(document.getElementById('lesson2'),{
+  name:'Ms. Rivera',role:'Reading coach',voiceHint:/female|samantha|zira|jenny|aria/i,
+  look:{skin:'#c98f63',hair:'#2a1a12',shirt:'#0f766e',glasses:true,
+    hairBack:'M42 70 q-2 60 18 66 h40 q20 -6 18 -66 q-4 -42 -38 -42 q-34 0 -38 42z',
+    hairFront:'M46 62 q6 -32 34 -32 q30 0 34 34 q-20 -18 -48 -14 q-12 2 -20 12z'},
+  slides:[
+   {label:'Today’s skill',say:"Hi, I’m Ms. Rivera, your reading coach. Today you will learn a new reading skill called making inferences. Good readers use it every day, and it shows up on ELPA21 and state tests.",
+    es:"Hola, soy la Sra. Rivera. Hoy vas a aprender una nueva destreza: hacer inferencias.",
+    board:`<h4 class="bh">Making Inferences</h4><p class="bsub">Read between the lines</p><p class="bnote">Objective: I can make an inference and support it with a text clue.</p>`},
+   {label:'What it is',say:"Authors don’t tell you everything. They leave clues. An inference is a smart guess. You take a clue from the text and add what you already know. Clue plus what I know equals inference.",
+    es:"Una inferencia es una pista del texto más lo que ya sabes.",
+    board:`<div class="bform"><span>Text clue</span><b>+</b><span>What I know</span><b>=</b><span class="on">Inference</span></div><p class="bnote">An inference is NOT written in the text. You figure it out.</p>`},
+   {label:'Watch me',say:"Watch me. Here is a sentence. Maria grabbed her umbrella and frowned at the window. My question is: what is the weather like? The sentence does not say. So I will look for clues.",
+    es:"Mírame. La oración no dice el clima, así que busco pistas.",
+    board:`<p class="bsent">Maria grabbed her umbrella and frowned at the window.</p><p class="bq">What is the weather like?</p>`},
+   {label:'Find clues',say:"My first clue is umbrella. My second clue is frowned at the window. Now I add what I know. People use umbrellas when it rains. A frown means someone is unhappy.",
+    es:"Pistas: paraguas y frunció el ceño. Sé que usamos paraguas cuando llueve.",
+    board:`<p class="bsent">Maria grabbed her <u>umbrella</u> and <u>frowned at the window</u>.</p><div class="bcols"><div><b>Clues</b><br>umbrella<br>frowned at the window</div><div><b>I know</b><br>umbrellas → rain<br>frown → unhappy</div></div>`},
+   {label:'Make the inference',say:"So I can infer that it is raining, and Maria is not happy about it. Notice that the word rain is never in the sentence. I figured it out from the clues. That is an inference.",
+    es:"Puedo inferir que está lloviendo y que María no está contenta.",
+    board:`<p class="bbig">So I can infer that it is raining and Maria is not happy about it.</p><p class="bnote">✓ The word “rain” is not in the sentence.</p>`},
+   {label:'Your turn',say:"Now it’s your turn. Jamal checked the clock three times and kept tapping his foot. How does Jamal feel? Find two clues. Tell a partner, then press Continue.",pause:true,
+    es:"Tu turno: ¿Cómo se siente Jamal? Busca dos pistas.",
+    board:`<p class="bsent">Jamal checked the clock three times and kept tapping his foot.</p><p class="bq">How does Jamal feel?</p><button class="btn pl-reveal" type="button">Show answer</button><p class="bbig" hidden>Clues: clock three times + tapping foot → He feels impatient or worried about being late.</p>`},
+   {label:'Your tool',say:"Great thinking. When you answer an inference question, use three steps. It says. I know. And so. Now scroll down. Read the story, and use the coach hints if you get stuck. You can do this.",
+    es:"Usa tres pasos: El texto dice, Yo sé, Entonces infiero. ¡Tú puedes!",
+    board:`<ol class="blist"><li><b>It says…</b> The text says “___.”</li><li><b>I know…</b> I know that ___.</li><li><b>And so…</b> So I can infer that ___.</li></ol><p class="bnote">Next: read “The Night Before Landfall” ↓</p>`}
+  ]});
+
+lessonPlayer(document.getElementById('lesson3'),{
+  name:'Mr. Okafor',role:'Writing coach',voiceHint:/male|daniel|david|guy|alex|fred/i,
+  look:{skin:'#6b4228',hair:'#141010',shirt:'#b45309',glasses:false,
+    hairBack:'M48 60 q0 -30 32 -30 q32 0 32 30z',
+    hairFront:'M46 64 q2 -34 34 -34 q32 0 34 34 q-6 -14 -34 -16 q-28 2 -34 16z'},
+  slides:[
+   {label:'Today’s skill',say:"Hello, I’m Mr. Okafor, your writing coach. Today you will learn how to write complex sentences. This skill makes your writing sound more academic, and it helps your ELPA21 writing score.",
+    es:"Hola, soy el Sr. Okafor. Hoy vas a aprender a escribir oraciones complejas.",
+    board:`<h4 class="bh">Complex Sentences</h4><p class="bsub">Connect your ideas</p><p class="bnote">Objective: I can join two ideas with because, although, when, if, or so that.</p>`},
+   {label:'The problem',say:"Look at these two sentences. The wind blew. The tree fell. They are correct, but they are short and choppy. The reader has to guess how the ideas connect.",
+    es:"Estas oraciones son correctas pero cortas. No muestran la conexión.",
+    board:`<p class="bsent">The wind blew. The tree fell.</p><p class="bnote">Short. Choppy. How are they connected?</p>`},
+   {label:'Connecting words',say:"Connecting words show the relationship. Because shows a reason. Although shows a contrast. When shows time. If shows a condition. So that shows a purpose.",
+    es:"because = porque, although = aunque, when = cuando, if = si, so that = para que.",
+    board:`<div class="bchips"><span><b>because</b> reason</span><span><b>although</b> contrast</span><span><b>when</b> time</span><span><b>if</b> condition</span><span><b>so that</b> purpose</span></div>`},
+   {label:'Watch me',say:"Watch me. Why did the tree fall? Because the wind blew. That is a reason, so I choose because. The tree fell because the wind blew. Now it is one strong sentence.",
+    es:"¿Por qué se cayó el árbol? Es una razón, entonces uso because.",
+    board:`<p class="bsent">The tree fell <u>because</u> the wind blew.</p><p class="bnote">Reason → because · no comma in the middle</p>`},
+   {label:'The comma rule',say:"I can also flip it. Because the wind blew, comma, the tree fell. When the connecting word comes first, put a comma after the first idea. When it is in the middle, you usually don’t need a comma.",
+    es:"Si la palabra de enlace va primero, pon una coma después de la primera idea.",
+    board:`<p class="bsent"><u>Because</u> the wind blew<span class="bcomma">,</span> the tree fell.</p><p class="bnote">Connecting word first → comma after the first idea</p>`},
+   {label:'Watch out',say:"Watch out for one common mistake. In Spanish we say aunque, pero. In English, never use although and but together. Choose only one.",
+    es:"En inglés no se usa although y but juntos. Elige solo uno.",
+    board:`<p class="bsent bad">✗ Although it rained, but we played.</p><p class="bsent good">✓ Although it rained, we played.</p><p class="bsent good">✓ It rained, but we played.</p>`},
+   {label:'Your turn',say:"Your turn. It rained all night. The game was not canceled. Which connecting word fits? Say the full sentence to a partner, then press Continue.",pause:true,
+    es:"Tu turno: ¿Qué palabra de enlace va aquí?",
+    board:`<p class="bsent">It rained all night. The game was not canceled.</p><button class="btn pl-reveal" type="button">Show answer</button><p class="bbig" hidden>Although it rained all night, the game was not canceled. (contrast → although)</p>`},
+   {label:'Your steps',say:"Excellent. Remember the steps. Find the relationship. Choose the word. Join the sentences. Check the comma. Now scroll down and practice with the coach. You’ve got this.",
+    es:"Recuerda: relación, palabra, unir, revisar la coma. ¡Tú puedes!",
+    board:`<ol class="blist"><li>Find the relationship</li><li>Choose the connecting word</li><li>Join and cut extra words</li><li>Check the comma and capital</li></ol><p class="bnote">Next: practice below ↓</p>`}
+  ]});
+
+})();
+</script>
+</body>
+</html>
